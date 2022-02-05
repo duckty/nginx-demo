@@ -4,7 +4,45 @@ jobs:
   Explore-GitHub-Actions:
     runs-on: self-hosted
     steps:
-      - run: echo "🎉 The job was automatically triggered by a ${{ env.AWS_ACCESS_KEY_ID }} event."
+      # - uses: actions/setup-python@v2
+      #   with:
+      #     python-version: '3.7'
+      # - name: Install dependencies
+      #   run: |
+      #     python -m pip install --upgrade pip
+      #     pip install awscli==2.4.14
+      #     aws eks --region ${{ secrets.AWS_DEFAULT_REGION }}  update-kubeconfig --name ${CLUSTER_NAME} --alias ${CLUSTER_NAME}
+      #   env:
+      #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     CLUSTER_NAME: retudo
+      - name: Test ${{ matrix.TEST_NAME }}
+        id: install-aws-cli
+        uses: unfor19/install-aws-cli-action@master
+        with:
+          version: 2
+      - run: |
+            aws eks --region eu-central-1  update-kubeconfig --name ${CLUSTER_NAME} --alias ${CLUSTER_NAME}
+        shell: bash
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          CLUSTER_NAME: retudo
+      - name: helm deploy
+        uses: koslib/helm-eks-action@master
+        with:
+          command: export KUBE_CONFIG_DATA=$(cat /home/runner/.kube/config | base64) && helm repo add bitnami https://charts.bitnami.com/bitnami && helm upgrade --install nginx -n staging bitnami/nginx
+
+      # - name: 'Deploy'
+      #   uses: 'deliverybot/helm@v1'
+      #   with:
+      #     release: 'nginx'
+      #     namespace: 'staging'
+      #     chart: 'bitnami/nginx'
+      #     helm: helm3
+      #     repo: https://charts.bitnami.com/bitnami
+
+
       # - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
       # - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
       # - name: Check out repository code
